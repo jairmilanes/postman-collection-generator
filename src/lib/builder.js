@@ -1,51 +1,43 @@
-import { map, pipe } from 'lodash/fp'
-
-const build = async (collection, router, config) =>
-	pipe([
-		filterStack('name', 'router'), // routes
-		routes => {
-			return routes
-		},
-		routes =>
-			map(route => {
-				return pipe([
-					ensureFolderExists(collection),
-					addItems(collection)
-				])(route)
-			})(routes),
-		collections => {
-			// console.info(collection)
-			return collection
-		}
-		//await saveCollection(config), // payload
-		//await saveEnvironment(config), // payload
-		//saveCollectionFile(config) // payload
-	])(router)
+import map from 'lodash/fp/map'
+import pipe from 'lodash/fp/pipe'
 
 /**
+ * Router stack filter constructor
  *
- * @param stack
- * @param by
- * @param value
+ * @param {string} by The key that will be used to filter the routes
+ * @param {string} value The value which to compare to
+ * @returns {function(route:object)} The filterStack function
  */
-const filterStack = (by, value) => route =>
-	route.stack.filter(route => route[by] === value)
+const filterStack = (by, value) =>
+	/**
+	 * Router stack filter
+	 *
+	 * @param {object} route The route Layer
+	 * @returns {Object[]} An array of routes
+	 */
+	route => route.stack.filter(route => route[by] === value)
 
 /**
  * Checks if the endpoints group folder exists and if not create it
  *
  * @param {Object} collection The collection
- * @param {Object} route The route
  * @returns {Object} The collection
  */
-const ensureFolderExists = collection => route => {
-	const id = cleanRegex(route.regexp.source)
-	if (!collection.item.has(id)) {
-		collection.item.addFolder(id)
-	}
+const ensureFolderExists = collection =>
+	/**
+	 * Checks if the endpoints group folder exists and if not create it
+	 *
+	 * @param {object} route The route Layer
+	 * @returns {*}
+	 */
+	route => {
+		const id = getGroupId(route.regexp.source)
+		if (!collection.item.has(id)) {
+			collection.item.addFolder(id)
+		}
 
-	return route
-}
+		return route
+	}
 
 /**
  * Cleans a route regexp string to the the groupId
@@ -53,11 +45,11 @@ const ensureFolderExists = collection => route => {
  * @param {String} regex The regex string
  * @returns {string} The sanitized string
  */
-const cleanRegex = regex => {
+const getGroupId = regex => {
 	// @todo create better folder labels for first level routes instead of the route path cleaned from the regex
 	const matches = regex.match(/\^(.*?)\?/g, '')
 	if (matches.length) {
-		return matches[0].replace(/[\\^$?]/g, '')
+		return matches[0].replace(/[\\^$?]/g, '').slice(0, -1)
 	}
 	throw new Error(`Could not extract id from ${regex}`)
 }
@@ -65,47 +57,83 @@ const cleanRegex = regex => {
 /**
  * Add route items to collection
  *
- * @param {object[]} stack The route stack
- * @param {string} groupId The group id for this stack
  * @param {object} collection The collection
  * @returns {*} The collection
  */
-const addItems = collection => route => {
-	const groupId = cleanRegex(route.regexp.source)
-	const stack = route.handle.stack
-
-	if (!stack.length) {
-		return collection
-	}
+const addItems = collection =>
 	/**
-	 * Resursive helper
+	 * Adds items to the collection
 	 *
-	 * @param {number} index The current index
-	 * @returns {*} The collection
+	 * @param {object} route The route Layer
+	 * @returns {*}
 	 */
-	const r = index => {
-		const route = stack[index]
+	route => {
+		const groupId = getGroupId(route.regexp.source)
+		const stack = route.handle.stack
 
-		if (!route.route && route.handle && route.handle.stack) {
-			return addItems(collection)(route)
-		}
-
-		map(method => {
-			collection.item.addToFolder(
-				groupId,
-				`/${groupId}${route.route.path}`,
-				method
-			)
-		})(Object.keys(route.route.methods))
-
-		if (++index > stack.length - 1) {
+		if (!stack.length) {
 			return collection
 		}
+		/**
+		 * Recursive helper
+		 *
+		 * @param {number} index The current index
+		 * @returns {*} The collection
+		 */
+		const r = index => {
+			// @todo remove this function from here into a separate function
+			const route = stack[index]
 
-		r(++index)
+			if (!route.route && route.handle && route.handle.stack) {
+				return addItems(collection)(route)
+			}
+
+			createItemsFromMethods(collection, groupId, route.route)
+
+			if (++index > stack.length - 1) {
+				return collection
+			}
+
+			r(index)
+		}
+
+		return r(0)
 	}
 
-	return r(0)
+/**
+ * Creates items based on the route methods
+ *
+ * @param {object} collection The collection
+ * @param {string} groupId The group to add the new items to
+ * @param {object} route A route layer
+ * @returns {String[]} The method names that were added to the collection
+ */
+const createItemsFromMethods = (collection, groupId, route) => {
+	//console.info(Object.keys(route.methods))
+	return map(method => {
+		//console.info(groupId, `/${groupId}${route.path}`, method)
+		collection.item.addToFolder(groupId, `${groupId}${route.path}`, method)
+	})(Object.keys(route.methods))
 }
 
-export default build
+/**
+ * The collection builder
+ *
+ * @param {object} collection The collection
+ * @param {object} router The app router object
+ * @param {object} config The config object
+ * @returns {Promise<Object>} A pronise that resolves with the built collection
+ */
+export default async (collection, router, config) => {
+	pipe([
+		filterStack('name', 'router'),
+		routes =>
+			map(route =>
+				pipe([ensureFolderExists(collection), addItems(collection)])(
+					route
+				)
+			)(routes)
+	])(router)
+
+	return collection
+}

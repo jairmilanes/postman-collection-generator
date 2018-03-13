@@ -4,10 +4,6 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _stringify = require('babel-runtime/core-js/json/stringify');
-
-var _stringify2 = _interopRequireDefault(_stringify);
-
 var _regenerator = require('babel-runtime/regenerator');
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
@@ -28,13 +24,13 @@ var _path = require('path');
 
 var _path2 = _interopRequireDefault(_path);
 
-var _builder = require('./lib/builder');
-
-var _builder2 = _interopRequireDefault(_builder);
-
 var _fp = require('lodash/fp');
 
 var _postmanSdk = require('postman-sdk');
+
+var _builder = require('./lib/builder');
+
+var _builder2 = _interopRequireDefault(_builder);
 
 var _environment = require('./lib/environment');
 
@@ -43,6 +39,10 @@ var _environment2 = _interopRequireDefault(_environment);
 var _collection = require('./lib/collection');
 
 var _collection2 = _interopRequireDefault(_collection);
+
+var _file = require('./lib/file');
+
+var _file2 = _interopRequireDefault(_file);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -63,36 +63,37 @@ const generateCollection = app => (config, meta = {}) => {
 			return _regenerator2.default.wrap(function _callee$(_context) {
 				while (1) switch (_context.prev = _context.next) {
 					case 0:
-						_context.next = 2;
+						console.info(req.query);
+						_context.next = 3;
 						return (0, _builder2.default)(collection(meta.name, meta.version), app._router, config);
 
-					case 2:
+					case 3:
 						data = _context.sent;
 
-						if (req.params.postman) {
-							_context.next = 5;
+						if (req.query.postman) {
+							_context.next = 6;
 							break;
 						}
 
-						return _context.abrupt('return', res.json(data));
+						return _context.abrupt('return', res.json(data.collection));
 
-					case 5:
-						if (!(req.params.postman === 'local')) {
-							_context.next = 7;
+					case 6:
+						if (!(req.query.postman === 'local')) {
+							_context.next = 8;
 							break;
 						}
 
-						return _context.abrupt('return', res.json(saveCollectionFile(data)));
+						return _context.abrupt('return', res.json((0, _file2.default)(data.collection)));
 
-					case 7:
-						if (!(req.params.postman === 'cloud')) {
-							_context.next = 9;
+					case 8:
+						if (!(req.query.postman === 'cloud')) {
+							_context.next = 10;
 							break;
 						}
 
-						return _context.abrupt('return', res.json((0, _fp.pipe)([_collection2.default, _environment2.default])(data)));
+						return _context.abrupt('return', res.json((0, _fp.pipe)([_collection2.default, _environment2.default])(data.collection)));
 
-					case 9:
+					case 10:
 					case 'end':
 						return _context.stop();
 				}
@@ -128,32 +129,6 @@ const checkVersion = current => {
 		console.error(`Error while trying to read from local postman file: ${error.message}`);
 		return true;
 	}
-};
-
-/**
- * Saves a collection file
- *
- * @param {Object} collection The collection object
- * @returns {Boolean} True if all was ok
- */
-const saveCollectionFile = collection => {
-	_fs2.default.writeFileSync(getLocalFilePath(), (0, _stringify2.default)(collection), {
-		flag: 'w+'
-	});
-
-	return collection;
-};
-
-const getLocalFilePath = () => _path2.default.join(ensureDirectoryExists(), 'collections.json');
-
-const ensureDirectoryExists = () => {
-	const postmanDir = _path2.default.join(_fs2.default.realpathSync('./'), '.postman');
-
-	if (!_fs2.default.existsSync(postmanDir)) {
-		_fs2.default.mkdirSync(postmanDir);
-	}
-
-	return postmanDir;
 };
 
 /**

@@ -1,11 +1,14 @@
 import express from 'express'
 import fs from 'fs'
 import path from 'path'
-import build from './lib/builder'
 import { pipe } from 'lodash/fp'
 import { Builder } from 'postman-sdk'
-import saveEnvironment from './lib/environment'
-import saveCollection from './lib/collection'
+
+import build from './lib/builder'
+import saveToPostmanEnvironment from './lib/environment'
+import saveToPostmanCollection from './lib/collection'
+import saveToFile from './lib/file'
+
 const { collection } = Builder
 
 /**
@@ -18,22 +21,27 @@ const { collection } = Builder
 const generateCollection = app => (config, meta = {}) => {
 	const router = express.Router()
 	router.route('/generate-collection').get(async (req, res, next) => {
+		console.info(req.query)
 		const data = await build(
 			collection(meta.name, meta.version),
 			app._router,
 			config
 		)
 
-		if (!req.params.postman) {
-			return res.json(data)
+		if (!req.query.postman) {
+			return res.json(data.collection)
 		}
 
-		if (req.params.postman === 'local') {
-			return res.json(saveCollectionFile(data))
+		if (req.query.postman === 'local') {
+			return res.json(saveToFile(data.collection))
 		}
 
-		if (req.params.postman === 'cloud') {
-			return res.json(pipe([saveCollection, saveEnvironment])(data))
+		if (req.query.postman === 'cloud') {
+			return res.json(
+				pipe([saveToPostmanCollection, saveToPostmanEnvironment])(
+					data.collection
+				)
+			)
 		}
 	})
 
@@ -65,33 +73,6 @@ const checkVersion = current => {
 		)
 		return true
 	}
-}
-
-/**
- * Saves a collection file
- *
- * @param {Object} collection The collection object
- * @returns {Boolean} True if all was ok
- */
-const saveCollectionFile = collection => {
-	fs.writeFileSync(getLocalFilePath(), JSON.stringify(collection), {
-		flag: 'w+'
-	})
-
-	return collection
-}
-
-const getLocalFilePath = () =>
-	path.join(ensureDirectoryExists(), 'collections.json')
-
-const ensureDirectoryExists = () => {
-	const postmanDir = path.join(fs.realpathSync('./'), '.postman')
-
-	if (!fs.existsSync(postmanDir)) {
-		fs.mkdirSync(postmanDir)
-	}
-
-	return postmanDir
 }
 
 /**
