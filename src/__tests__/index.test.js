@@ -70,27 +70,35 @@ describe('Server: ', () => {
 			.expect('Content-Type', /json/)
 			.expect(200)
 			.then(response => {
-				console.info(response.body.collection.item)
+				expect(response.body).toMatchObject({
+					info: {
+						name: expect.any(String),
+						schema:
+							'https://schema.getpostman.com/json/collection/v2.0.0/collection.json'
+					},
+					item: expect.anything()
+				})
+				done()
 			})
 	})
 
 	it('Should save a collection as a local file', done => {
 		request
-			.get('/postman/generate-collection')
+			.get('/postman/generate-collection?postman=local')
 			.expect('Content-Type', /json/)
 			.expect(200)
 			.then(response => {
-				// console.info(response.body.collection.item)
-				expect(response.body).toMatchObject({
-					collection: {
-						info: {
-							name: expect.any(String),
-							schema:
-								'https://schema.getpostman.com/json/collection/v2.0.0/collection.json'
-						},
-						item: expect.anything()
-					}
-				})
+				done()
+			})
+	})
+
+	it('Should save a collection to postman', done => {
+		request
+			.get('/postman/generate-collection?postman=cloud')
+			.expect('Content-Type', /json/)
+			.expect(200)
+			.then(response => {
+				done()
 			})
 	})
 })
