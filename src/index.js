@@ -1,7 +1,7 @@
 import express from 'express'
 import fs from 'fs'
 import path from 'path'
-import { pipe } from 'lodash/fp'
+import { pipe } from './helper/util'
 import { Builder } from 'postman-sdk'
 
 import build from './lib/builder'
@@ -21,7 +21,6 @@ const { collection } = Builder
 const generateCollection = app => (config, meta = {}) => {
 	const router = express.Router()
 	router.route('/generate-collection').get(async (req, res, next) => {
-		console.info(req.query)
 		const data = await build(
 			collection(meta.name, meta.version),
 			app._router,
@@ -38,9 +37,7 @@ const generateCollection = app => (config, meta = {}) => {
 
 		if (req.query.postman === 'cloud') {
 			return res.json(
-				pipe([saveToPostmanCollection, saveToPostmanEnvironment])(
-					data.collection
-				)
+				await pipe(saveToPostmanCollection)(data.collection)
 			)
 		}
 	})

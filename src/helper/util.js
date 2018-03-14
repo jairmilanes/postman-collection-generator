@@ -1,12 +1,12 @@
 /**
- * Simple recursive utility
+ * Simple findBy recursive utility
  *
  * @param {array} array The array to look into
  * @param {string} by The key to compare
  * @param {string} value The value to compare
  * @returns {null|*} Null or the value found
  */
-export const rerursify = (array, by, value) => {
+export const findBy = (array, by, value) => {
 	/**
 	 * @param {number} index The current index
 	 * @returns {null|*} Null or the value found
@@ -27,7 +27,7 @@ export const rerursify = (array, by, value) => {
 }
 
 /**
- * Pipe functions
+ * Pipe async functions
  *
  * @param {object} fns The fns
  * @returns {function(*=): *} The result
@@ -36,11 +36,9 @@ export const pipe = (...fns) => x =>
 	fns.reduce((prev, f) => prev.then(f), Promise.resolve(x))
 
 /**
- * Pipe Sync version functions
- * @param {object} ops The fns
- * @param {object} ops The fns
- * @returns {function(*=): *} The result
+ * Pipes sync functions
+ *
+ * @param {function[]} fns Functions array
+ * @returns {function(*=): (*)}
  */
-export const pipeSync = (first, ...ops) =>
-	ops.reduce((a, b) => arg => b(a(arg)), first)
-// export const pipeSync = (...fns) => x => fns.reduce((prev, f) => f, x)
+export const pipeSync = (...fns) => x => fns.reduce((prev, f) => f(prev), x)
