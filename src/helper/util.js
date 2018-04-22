@@ -34,11 +34,3 @@ export const findBy = (array, by, value) => {
  */
 export const pipe = (...fns) => x =>
 	fns.reduce((prev, f) => prev.then(f), Promise.resolve(x))
-
-/**
- * Pipes sync functions
- *
- * @param {function[]} fns Functions array
- * @returns {function(*=): (*)}
- */
-export const pipeSync = (...fns) => x => fns.reduce((prev, f) => f(prev), x)

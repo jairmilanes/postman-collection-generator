@@ -1,20 +1,15 @@
 {
 	"name": "postman-collection-generator",
-	"version": "1.1.0",
-	"description":
-		"Generate a collection from your middleware based api backend (express, restify, koa...)",
+	"version": "0.0.1",
+	"description": "Generate a collection from your middleware based api backend (express, restify, koa...)",
 	"keywords": [
-		"aws",
-		"lambda",
-		"aws lambda",
-		"lambda express",
-		"rest",
-		"lambda rest",
-		"restapi",
-		"express server",
 		"express",
-		"express-lambda",
-		"lamdba rest api"
+		"express server",
+		"postman",
+		"postman sdk",
+		"api docs",
+		"documentation",
+		"generator"
 	],
 	"author": "jair Milanes",
 	"license": "MIT",
@@ -28,12 +23,10 @@
 		"precommit": "lint-staged",
 		"deploy": "npm-run-all lint:js jest:u",
 		"jest:u": "jest -u --coverage",
-		"compile":
-			"babel --ignore node_modules --watch --ignore __tests__ -d dist/ src/",
+		"compile": "babel --ignore node_modules --ignore __tests__ -d dist/ src/",
 		"test:u": "npm-run-all lint:js copy babel jest:u",
 		"build": "npm-run-all lint:js:fix jest compile",
-		"pretty":
-			"prettier --config ./.prettierrc.yml --write \"{src,__{tests,mocks}__}/**/*.js\"",
+		"pretty": "prettier --config ./.prettierrc.yml --write \"{src,__{tests,mocks}__}/**/*.js\"",
 		"generate": "node ./dist/bin/generator.js"
 	},
 	"bin": {
@@ -81,7 +74,7 @@
 	},
 	"dependencies": {
 		"lodash": "^4.17.5",
-		"postman-sdk": "^1.2.2",
+		"postman-sdk": "^1.2.3",
 		"uuid": "^3.2.1",
 		"uuid-by-string": "^0.6.0"
 	},

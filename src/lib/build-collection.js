@@ -84,7 +84,7 @@ const addItems = collection =>
 			// @todo remove this function from here into a separate function
 			const route = stack[index]
 
-			if (!route.route && route.handle && route.handle.stack) {
+			if (!route.route) {
 				return addItems(collection)(route)
 			}
 
@@ -109,9 +109,7 @@ const addItems = collection =>
  * @returns {String[]} The method names that were added to the collection
  */
 const createItemsFromMethods = (collection, groupId, route) => {
-	//console.info(Object.keys(route.methods))
 	return map(method => {
-		//console.info(groupId, `/${groupId}${route.path}`, method)
 		collection.item.addToFolder(groupId, `${groupId}${route.path}`, method)
 	})(Object.keys(route.methods))
 }
